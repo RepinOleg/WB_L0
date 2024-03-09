@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres
+    container_name: my-postgres
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+  nats:
+    image: "nats-streaming:latest"
+    container_name: nats
+    restart: "always"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
