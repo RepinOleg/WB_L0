@@ -1,12 +1,14 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
 	"fmt"
+	"github.com/RepinOleg/WB_L0/internal/dbs"
+	"github.com/RepinOleg/WB_L0/internal/handler"
+	"github.com/RepinOleg/WB_L0/internal/repository"
 	_ "github.com/lib/pq"
 	"github.com/nats-io/stan.go"
 	"log"
+	"net/http"
 )
 
 func main() {
@@ -16,42 +18,33 @@ func main() {
 		log.Fatalf("Error connecting to NATS Streaming: %v", err)
 	}
 	defer sc.Close()
-	fmt.Println("Connected to nats streaming")
 
-	connStr := "user=admin password=admin dbname=postgres sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+	cfg := dbs.Config{
+		Addr:     "localhost",
+		Port:     5432,
+		User:     "admin",
+		Password: "admin",
+		DB:       "postgres",
+	}
+	db, err := dbs.New(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connected to db")
 	defer db.Close()
-	sub, err := sc.Subscribe("order", func(msg *stan.Msg) {
-		handleJson(msg, db)
-	})
-	defer sub.Unsubscribe()
+	repo := repository.NewRepository(db)
 
-	select {} // Бесконечный цикл для ожидания сообщений
-}
-
-func handleJson(msg *stan.Msg, db *sql.DB) {
-	var jsonData map[string]interface{}
-	err := json.Unmarshal(msg.Data, &jsonData)
+	_, err = sc.Subscribe("order", func(msg *stan.Msg) {
+		handler.MsgHandler(msg, repo)
+	}, stan.DurableName("order"))
 	if err != nil {
-		log.Println("Error unmarshalling JSON data:", err)
+		fmt.Println(err.Error())
 		return
 	}
 
-	jsonBytes, err := json.Marshal(jsonData)
+	http.Handle("/", handler.HandleFunc(handler.GetOrderHandler(repo)))
+	fmt.Println("starting server at :8080")
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
-		log.Println("Error marshalling JSON data:", err)
-		return
+		fmt.Println(err.Error())
 	}
-
-	_, err = db.Exec("INSERT INTO orders (order_data) VALUES ($1)", jsonBytes)
-	if err != nil {
-		log.Println("Error inserting data into PostgreSQL:", err)
-		return
-	}
-
-	log.Println("JSON data saved to PostgreSQL")
 }

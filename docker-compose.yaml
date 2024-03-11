@@ -11,6 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - ./assets/postgres/init.sql:/docker-entrypoint-initdb.d/1-schema.sql
       - ./pg_data:/var/lib/postgresql/data
   nats:
     image: "nats-streaming:latest"
@@ -19,3 +20,5 @@ services:
     ports:
       - "4222:4222"
       - "8222:8222"
+volumes:
+  pgdata:
