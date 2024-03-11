@@ -26,8 +26,8 @@ func (r *Repository) GetOrderByID(id uint64) (string, error) {
 	return res, nil
 }
 
-func (r *Repository) AddOrder(id uint64, order []byte) error {
-	_, err := r.db.Exec(`INSERT INTO orders(id, order_data) VALUES($1, $2)`, id, order)
+func (r *Repository) AddOrder(order []byte) error {
+	_, err := r.db.Exec(`INSERT INTO orders(order_data) VALUES($1)`, order)
 	if err != nil {
 		return err
 	}

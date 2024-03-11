@@ -15,8 +15,7 @@ func (f HandleFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	f(w, r)
 }
 func MsgHandler(msg *stan.Msg, r *repository.Repository) {
-	// Todo FIX ID
-	err := r.AddOrder(1, msg.Data)
+	err := r.AddOrder(msg.Data)
 	if err != nil {
 		log.Println(err, "Put Order")
 	}

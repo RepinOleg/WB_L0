@@ -1,5 +1,5 @@
 CREATE TABLE orders
 (
-    id integer PRIMARY KEY,
+    id bigserial PRIMARY KEY,
     order_data jsonb
 );
