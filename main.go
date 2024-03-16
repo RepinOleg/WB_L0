@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/RepinOleg/WB_L0/internal/cache"
 	"github.com/RepinOleg/WB_L0/internal/dbs"
 	"github.com/RepinOleg/WB_L0/internal/handler"
-	"github.com/RepinOleg/WB_L0/internal/repository"
 	_ "github.com/lib/pq"
 	"github.com/nats-io/stan.go"
 	"log"
@@ -31,17 +31,24 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	repo := repository.NewRepository(db)
 
-	_, err = sc.Subscribe("order", func(msg *stan.Msg) {
-		handler.MsgHandler(msg, repo)
-	}, stan.DurableName("order"))
+	memCache := cache.NewCache()
+	app := &handler.DBHandler{DB: db, Cache: memCache}
+
+	// получаем из базы все записи
+	orders, err := app.GetAllOrders()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	//Добавляем все полученные записи в кэш
+	app.Cache.SetAllOrders(orders)
+
+	_, err = sc.Subscribe("order", app.MsgHandler, stan.DurableName("order"))
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-
-	http.Handle("/", handler.HandleFunc(handler.GetOrderHandler(repo)))
+	http.HandleFunc("/", app.GetOrderHandler)
 	fmt.Println("starting server at :8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

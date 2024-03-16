@@ -1,27 +1,30 @@
 package cache
 
-import "sync"
+import (
+	"github.com/RepinOleg/WB_L0/internal/models"
+	"sync"
+)
 
 type Cache struct {
-	data map[uint64]string
+	data map[string]models.Order
 	mu   sync.RWMutex
 }
 
 func NewCache() *Cache {
 	cache := &Cache{
-		data: make(map[uint64]string),
+		data: make(map[string]models.Order),
 	}
 	return cache
 }
 
-func (c *Cache) SetOrder(id uint64, data string) {
+func (c *Cache) SetOrder(id string, data models.Order) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.data[id] = data
 }
 
-func (c *Cache) GetOrderByID(id uint64) (string, bool) {
+func (c *Cache) GetOrderByID(id string) (models.Order, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	data, ok := c.data[id]
@@ -29,4 +32,12 @@ func (c *Cache) GetOrderByID(id uint64) (string, bool) {
 		return data, false
 	}
 	return data, true
+}
+
+func (c *Cache) SetAllOrders(orders []models.Order) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, order := range orders {
+		c.data[order.OrderUID] = order
+	}
 }

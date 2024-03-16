@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<h1>Order Details</h1>
+<p>Order UID: {{.OrderUID}}</p>
+<p>Track Number: {{.TrackNumber}}</p>
+<p>Entry: {{.Entry}}</p>
+<p>Locale: {{.Locale }}</p>
+<p>InternalSignature: {{.InternalSignature}}</p>
+<p>CustomerID: {{.CustomerID}}</p>
+<p>DeliveryService: {{.DeliveryService}}</p>
+<p>Shardkey: {{.Shardkey}}</p>
+<p>SmID: {{.SmID}}</p>
+<p>DateCreated: {{.DateCreated}}</p>
+<p>OofShard: {{.OofShard}}</p>
+
+
+<h2>Delivery Information</h2>
+<p>Name: {{.Delivery.Name}}</p>
+<p>Address: {{.Delivery.Address}}</p>
+<p>Phone: {{.Delivery.Phone}}</p>
+<p>ZIP: {{.Delivery.Zip}}</p>
+<p>City: {{.Delivery.City}}</p>
+<p>Region: {{.Delivery.Region}}</p>
+<p>Email: {{.Delivery.Email}}</p>
+
+<h2>Payment Information</h2>
+<p>Transaction: {{.Payment.Transaction}}</p>
+<p>RequestID: {{.Payment.RequestID}}</p>
+<p>Currency: {{.Payment.Currency}}</p>
+<p>Provider: {{.Payment.Provider}}</p>
+<p>Amount: {{.Payment.Amount}}</p>
+<p>PaymentDtt: {{.Payment.PaymentDt}}</p>
+<p>Bank: {{.Payment.Bank }}</p>
+<p>DeliveryCost: {{.Payment.DeliveryCost }}</p>
+<p>GoodsTotal: {{.Payment.GoodsTotal }}</p>
+<p>CustomFee: {{.Payment.CustomFee }}</p>
+
+<h2>Items</h2>
+{{range .Items}}
+    <p>ChrtID: {{.ChrtID}}, Track Number: {{.TrackNumber}}, Price: {{.Price}}, Rid: {{.Rid}}, Name: {{.Name}}, Sale: {{.Sale}}, Size: {{.Size}}, TotalPrice: {{.TotalPrice}}, NmID: {{.NmID}}, Brand: {{.Brand}}, Status: {{.Status}}</p>
+{{end}}
+
+
+</body>
+</html>
