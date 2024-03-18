@@ -41,3 +41,13 @@ func (c *Cache) SetAllOrders(orders []models.Order) {
 		c.data[order.OrderUID] = order
 	}
 }
+
+func (c *Cache) GetAllOrders() []models.Order {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	res := make([]models.Order, 0, len(c.data))
+	for _, order := range c.data {
+		res = append(res, order)
+	}
+	return res
+}

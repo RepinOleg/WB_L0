@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	sc, err := stan.Connect("test-cluster", "pub")
+	sc, err := stan.Connect("test-cluster", "publisher")
 	if err != nil {
 		log.Fatal(err)
 	}

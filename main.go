@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// Подключение к серверу NATS Streaming
-	sc, err := stan.Connect("test-cluster", "sub")
+	sc, err := stan.Connect("test-cluster", "subscriber")
 	if err != nil {
 		log.Fatalf("Error connecting to NATS Streaming: %v", err)
 	}
@@ -33,25 +33,21 @@ func main() {
 	defer db.Close()
 
 	memCache := cache.NewCache()
-	app := &handler.DBHandler{DB: db, Cache: memCache}
+	orderApp := &handler.DBHandler{DB: db, Cache: memCache}
+	//восстановление кэша
+	orderApp.RestoreCache()
 
-	// получаем из базы все записи
-	orders, err := app.GetAllOrders()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	//Добавляем все полученные записи в кэш
-	app.Cache.SetAllOrders(orders)
-
-	_, err = sc.Subscribe("order", app.MsgHandler, stan.DurableName("order"))
+	_, err = sc.Subscribe("order", orderApp.MsgHandler, stan.DurableName("order"))
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	http.HandleFunc("/", app.GetOrderHandler)
-	fmt.Println("starting server at :8080")
+
+	http.HandleFunc("/", orderApp.GetOrderHandler)
+	fmt.Println("server started at: 8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Fatal(err)
 	}
+
 }

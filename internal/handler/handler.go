@@ -18,6 +18,16 @@ type DBHandler struct {
 	Cache *cache.Cache
 }
 
+func (d *DBHandler) RestoreCache() {
+	// получаем из базы все записи
+	orders, err := d.GetAllOrders()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	//Добавляем все полученные записи в кэш
+	d.Cache.SetAllOrders(orders)
+}
+
 func (d *DBHandler) MsgHandler(msg *stan.Msg) {
 	res := validator(msg.Data)
 	if res {
@@ -39,10 +49,10 @@ func (d *DBHandler) MsgHandler(msg *stan.Msg) {
 func (d *DBHandler) GetOrderHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("order")
 
-	order, ok := d.GetOrderByID(idStr)
-	if ok != true {
+	order, ok := d.Cache.GetOrderByID(idStr)
+	if !ok {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(fmt.Sprintf("User with ID = %s not found", idStr))
+		_ = json.NewEncoder(w).Encode(fmt.Sprintf("User with ID = %s not found", idStr))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -56,6 +66,7 @@ func (d *DBHandler) GetOrderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}
+
 }
 
 func (d *DBHandler) AddOrder(id string, data []byte) {
@@ -63,10 +74,6 @@ func (d *DBHandler) AddOrder(id string, data []byte) {
 	if err != nil {
 		fmt.Println(err)
 	}
-}
-
-func (d *DBHandler) GetOrderByID(id string) (models.Order, bool) {
-	return d.Cache.GetOrderByID(id)
 }
 
 func (d *DBHandler) GetAllOrders() ([]models.Order, error) {
@@ -79,20 +86,24 @@ func (d *DBHandler) GetAllOrders() ([]models.Order, error) {
 	for rows.Next() {
 		var jsonData string
 		var id string
+
 		if err = rows.Scan(&id, &jsonData); err != nil {
 			return nil, err
 		}
+
 		var order models.Order
+
 		if err = json.Unmarshal([]byte(jsonData), &order); err != nil {
 			return nil, err
 		}
+
 		orders = append(orders, order)
 	}
 	return orders, nil
 }
 
 func validator(input []byte) bool {
-	schemaJSON, _ := os.ReadFile("schema.json")
+	schemaJSON, _ := os.ReadFile("api/schema.json")
 	schema := gojsonschema.NewStringLoader(string(schemaJSON))
 	in := gojsonschema.NewStringLoader(string(input))
 
